@@ -1,0 +1,38 @@
+/* Okta Token Preview — Injected page styles */
+
+.okta-token-preview-inject-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: #007dc1;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  margin-left: 12px;
+  vertical-align: middle;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+
+.okta-token-preview-inject-btn:hover {
+  background: #005f99;
+}
+
+.okta-token-preview-inject-btn svg {
+  flex-shrink: 0;
+}
+
+/* Floating fallback when no mount point found */
+.okta-token-preview-inject-btn.okta-token-preview-float {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 99999;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+

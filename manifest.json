@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Okta Token Preview",
+  "version": "1.0.0",
+  "description": "Preview OIDC tokens for Okta applications using the org authorization server — directly from the Admin Console.",
+  "permissions": [
+    "activeTab",
+    "tabs",
+    "storage",
+    "scripting"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["callback.html", "callback.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "host_permissions": [
+    "https://*.okta.com/*",
+    "https://*.okta-emea.com/*",
+    "https://*.oktapreview.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://*.okta.com/admin/*",
+        "https://*.okta-emea.com/admin/*",
+        "https://*.oktapreview.com/admin/*"
+      ],
+      "js": ["content.js"],
+      "css": ["content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "Okta Token Preview"
+  }
+}

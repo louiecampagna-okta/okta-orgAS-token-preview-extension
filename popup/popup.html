@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Okta Token Preview</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <!-- ── Header ─────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        <path d="M9 12l2 2 4-4"/>
+      </svg>
+    </div>
+    <div class="header-title">
+      <span class="header-main">Token Preview</span>
+      <span class="header-sub" id="header-domain"></span>
+    </div>
+    <div class="header-badge">Org AS</div>
+  </header>
+
+  <!-- ── Error / Not-on-app-page state ─────────────────────────── -->
+  <div id="view-not-app" class="view hidden">
+    <div class="empty-state">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#007dc1" stroke-width="1.5">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <path d="M3 9h18M9 21V9"/>
+      </svg>
+      <p>Navigate to an <strong>OIDC application</strong> in the Okta Admin Console to use Token Preview.</p>
+      <p class="hint">Admin Console → Applications → Applications → select an app</p>
+    </div>
+  </div>
+
+  <!-- ── Loading state ──────────────────────────────────────────── -->
+  <div id="view-loading" class="view">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <span>Loading app details…</span>
+    </div>
+  </div>
+
+  <!-- ── Main view ──────────────────────────────────────────────── -->
+  <div id="view-main" class="view hidden">
+
+    <!-- App Info Card -->
+    <section class="card" id="app-info-card">
+      <div class="card-header">
+        <span class="card-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="2" y="3" width="20" height="14" rx="2"/>
+            <path d="M8 21h8M12 17v4"/>
+          </svg>
+        </span>
+        Application
+      </div>
+      <div class="app-name" id="app-name">—</div>
+      <div class="app-meta">
+        <div class="meta-row">
+          <span class="meta-label">Client ID</span>
+          <span class="meta-value mono" id="app-client-id">—</span>
+          <button class="copy-btn" data-copy-id="app-client-id" title="Copy">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="9" y="9" width="13" height="13" rx="2"/>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </button>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Grant Types</span>
+          <span class="meta-value" id="app-grant-types">—</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Org AS Issuer</span>
+          <span class="meta-value mono" id="app-issuer">—</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Redirect URI Setup -->
+    <section class="card" id="redirect-uri-card">
+      <div class="card-header">
+        <span class="card-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+          </svg>
+        </span>
+        Extension Redirect URI
+        <span class="status-badge" id="redirect-status-badge">checking…</span>
+      </div>
+      <p class="card-desc">
+        The extension needs its redirect URI registered in this app to receive the authorization code.
+      </p>
+      <div class="redirect-uri-row">
+        <code class="redirect-uri-code" id="redirect-uri-value">—</code>
+        <button class="copy-btn" data-copy-id="redirect-uri-value" title="Copy redirect URI">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="9" y="9" width="13" height="13" rx="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        </button>
+      </div>
+      <div class="redirect-actions">
+        <button class="btn btn-secondary btn-sm" id="btn-auto-add-uri">
+          Auto-add to App
+        </button>
+        <button class="btn btn-ghost btn-sm" id="btn-remove-uri" style="display:none">
+          Remove from App
+        </button>
+        <span class="redirect-added-note hidden" id="redirect-added-note">
+          ✓ URI registered in app
+        </span>
+      </div>
+    </section>
+
+    <!-- Token Request Config -->
+    <section class="card">
+      <div class="card-header">
+        <span class="card-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>
+          </svg>
+        </span>
+        Token Request
+      </div>
+
+      <!-- User search -->
+      <div class="form-group">
+        <label class="form-label" for="user-search">User (optional login_hint)</label>
+        <div class="search-wrap">
+          <input
+            type="text"
+            id="user-search"
+            class="form-input"
+            placeholder="Search by name or email…"
+            autocomplete="off"
+          />
+          <div class="search-results hidden" id="user-search-results"></div>
+        </div>
+        <div class="selected-user hidden" id="selected-user">
+          <span id="selected-user-label"></span>
+          <button class="clear-btn" id="clear-user">✕</button>
+        </div>
+      </div>
+
+      <!-- Scope selector -->
+      <div class="form-group">
+        <label class="form-label">Scopes</label>
+        <div class="scope-grid" id="scope-grid">
+          <!-- populated by JS -->
+        </div>
+        <div class="custom-scope-wrap">
+          <input
+            type="text"
+            id="custom-scope-input"
+            class="form-input form-input-sm"
+            placeholder="Add custom scope…"
+          />
+          <button class="btn btn-ghost btn-sm" id="btn-add-custom-scope">Add</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Generate Button -->
+    <div class="generate-wrap">
+      <button class="btn btn-primary btn-full" id="btn-generate">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <polygon points="5 3 19 12 5 21 5 3"/>
+        </svg>
+        Generate Token Preview
+      </button>
+      <p class="generate-note">
+        Uses the <strong>Org Authorization Server</strong> (<code>https://&lt;domain&gt;/oauth2/v1/</code>)
+        with Auth Code + PKCE. Your existing admin session is reused — no re-login required.
+      </p>
+    </div>
+
+    <!-- Token Display -->
+    <section class="card hidden" id="tokens-card">
+      <div class="card-header">
+        <span class="card-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </span>
+        Token Results
+        <button class="btn btn-ghost btn-sm" id="btn-clear-tokens" style="margin-left:auto">Clear</button>
+      </div>
+
+      <!-- Token Tabs -->
+      <div class="token-tabs">
+        <button class="token-tab active" data-tab="access-token">Access Token</button>
+        <button class="token-tab" data-tab="id-token">ID Token</button>
+        <button class="token-tab" data-tab="raw">Raw Response</button>
+      </div>
+
+      <!-- Access Token Panel -->
+      <div class="token-panel" id="tab-access-token">
+        <div id="access-token-content"></div>
+      </div>
+
+      <!-- ID Token Panel -->
+      <div class="token-panel hidden" id="tab-id-token">
+        <div id="id-token-content"></div>
+      </div>
+
+      <!-- Raw Panel -->
+      <div class="token-panel hidden" id="tab-raw">
+        <pre class="raw-json" id="raw-response"></pre>
+      </div>
+    </section>
+
+  </div><!-- /view-main -->
+
+  <!-- Error display — outside all views so it's always visible -->
+  <div class="error-banner hidden" id="error-banner">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    <span id="error-message"></span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
